@@ -1,0 +1,1173 @@
+---
+title: "Covid 19 Daily Update"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+require(ggplot2)
+require(ggrepel)
+require(tidyverse)
+require(lubridate)
+require(knitr)
+require(kableExtra)
+library(scales)
+library(gsheet)
+library(dplyr)
+library(plotly)
+library(gridExtra)
+library(lattice)
+library(billboarder)
+require(moonBook)
+require(webr)
+library(xts)
+require(forecast)
+library(viridis)
+library(TSstudio)
+library(TSstudio)
+library(rgdal)
+library(sp)
+library(ggthemes)
+library(PerformanceAnalytics)
+library(prophet)
+library(ggpubr)
+library(DT)
+library(rpivotTable)
+library(billboarder)
+library(covid19.analytics)
+library(tidyquant)
+
+new = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1251585962"
+df_gogle_sheet = gsheet2tbl(new)
+
+df_gogle_sheet$Date<-as.Date(df_gogle_sheet$Date,"%d/%m/%Y")
+
+# New Data
+new2 = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=432805610"
+df_gogle_sheet2 = gsheet2tbl(new2)
+
+df_gogle_sheet2$`District/City`<-factor(df_gogle_sheet2$`District/City`)
+
+# New Data
+new3 = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1572997696"
+df_gogle_sheet3 = gsheet2tbl(new3)
+
+df_gogle_sheet3$Country<-factor(df_gogle_sheet3$Country)
+
+#Data 4
+new4 = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1348308270"
+df_gogle_sheet4 = gsheet2tbl(new4)
+
+df_gogle_sheet4$Location<-factor(df_gogle_sheet4$Location)
+
+# Data 5
+new5 = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=726710828"
+df_gogle_sheet5 = gsheet2tbl(new5)
+
+df_gogle_sheet5$date<-as.Date(df_gogle_sheet5$date,"%m/%d/%y")
+
+# Data 6
+new6 = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=70163363"
+df_gogle_sheet6 = gsheet2tbl(new6)
+
+df_gogle_sheet6$date<-as.Date(df_gogle_sheet6$date,"%m/%d/%y")
+df_gogle_sheet6$area_in_Mirpur<-factor(df_gogle_sheet6$area_in_Mirpur)
+
+new7 = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=900620935"
+df_gogle_sheet7 = gsheet2tbl(new7)
+
+df_gogle_sheet7$date<-as.Date(df_gogle_sheet7$date,"%m/%d/%y")
+df_gogle_sheet7$district_city<-factor(df_gogle_sheet7$district_city)
+
+# Mapping
+new8 = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1747350885"
+df_gogle_sheet8 = gsheet2tbl(new8)
+
+#Monthly Daily New Cases and New Death of Individual Months
+
+#Previous Month Condition 
+March1<-df_gogle_sheet[1:24,]
+April1<-df_gogle_sheet[25:54,]
+May<-df_gogle_sheet[55:85,]
+June<-df_gogle_sheet[86:115,]
+July<-df_gogle_sheet[116:146,]
+August<-df_gogle_sheet[147:177,]
+September<-df_gogle_sheet[178:207,]
+# Dhaka 
+ b = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1374921148"
+ Dhaka = gsheet2tbl(b)
+ 
+ Dhaka$Location<-factor(Dhaka$Location)
+
+#South Asia Data
+new9 = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=565148221"
+df_gogle_sheet9 = gsheet2tbl(new9)
+
+df_gogle_sheet9$Country<-factor(df_gogle_sheet9$Country)
+
+new11 = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=890347413"
+weekly = gsheet2tbl(new11)
+weekly$week_Name<-factor(weekly$week_Name)
+levels(weekly$week_Name)<-c("1st Week","2nd Week","3rd Week","4th Week","5th Week","6th Week","7th Week","8th Week","9th Week","10th Week","11th Week","12th Week","13th Week","14th Week","15th Week","16th Week","17th week","18th week","19th week","20th week","21th week","22th week","23th week","24th week","25th week","26th Week","27th week","28th week","29th week","30th Week","31th Week","32th week","33th week","34th week","35th Week","36th week","37th week","38th week","39th week","40th week","41th week","42th week","43th week","44th week","45th week","46th week","47th week","48th week","49th week","50th week","51th week","52th week","53th week","54th week","55th week","56th week","57th week","58th week","59th week","60th week","61th week","62th week","63th week",
+                            "64th week","65th week","66th week","67th week","68th week","69th week","70th week","71th week","72th week","73th week","74th week","75th week","76th week","77th week","78th week","79th week","80th week","81th week","82th week","83th week","84th week","85th week","86th week","87th week","88th week","89th week","90th week","91th week","92th week","93th week","94th week","95th week","96th week","97th week","98th week","99th week","100th week","101th week","102th week","103th week","104th week","105th week","106th week","107th week","108th week","109th week","110th week","111th week","112th week","113th week","114th week","115th week","116th week","117th week","118th week","119th week","120th week","121th week","122th week","123th week","124th week","125th week","126th week","127th week","128th week","129th week","130th week","131th week","132th week","133th week","134th week","135th week","136th week","137th week","138th week","139th week","140th week","141th week","142th week","143th week","144th week","145th week","146th week","147th week","148th week","149th week","150th week","151th week","152th week","153th week","154th week","155th week","156th week","157th week","158th week","159th week","160th week","161th week","162th week","163th week","164th week","165th week","166th week","167th week","168th week","169th week","170th week","171th week","172th week","173th week","174th week","175th week","176th week","177th week","178th week","179th week","180th week","181th week","182th week","183th week","184th week")
+weekly$week_range<-factor(weekly$week_range)
+
+Worldometers = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1234535355"
+Worldometers = gsheet2tbl(Worldometers)
+
+Worldometers$Country.Other<-factor(Worldometers$Country.Other)
+
+# Global Analysis on Continent
+global = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=905560757"
+world = gsheet2tbl(global)
+
+world$Country.Other.1<-factor(world$Country.Other.1)
+
+#Reshaping
+qw<-df_gogle_sheet%>%
+  select(Date,`Total Cases`,`Total deaths`,`Total Recoverd`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)
+
+week1<-qw[1:7,]
+week2<-qw[8:14,]
+week3<-qw[15:21,]
+week4<-qw[22:28,]
+week5<-qw[29:35,]
+week6<-qw[36:42,]
+week7<-qw[43:49,]
+week8<-qw[50:56,]
+week9<-qw[57:63,]
+week10<-qw[64:70,]
+week11<-qw[71:77,]
+week12<-qw[78:84,]
+week13<-qw[85:91,]
+week14<-qw[92:98,]
+week15<-qw[99:105,]
+week16<-qw[106:112,]
+week17<-qw[113:119,]
+week18<-qw[120:126,]
+week19<-qw[127:133,]
+week20<-qw[134:140,]
+week21<-qw[141:147,]
+week22<-qw[148:154,]
+week23<-qw[155:161,]
+week24<-qw[162:168,]
+week25<-qw[169:175,]
+week26<-qw[176:182,]
+week27<-qw[183:189,]
+week28<-qw[190:196,]
+week29<-qw[197:203,]
+week30<-qw[204:210,]
+week31<-qw[211:217,]
+week32<-qw[218:224,]
+week33<-qw[225:231,]
+week34<-qw[232:237,]
+week35<-qw[239:245,]
+week36<-qw[246:252,]
+week37<-qw[253:259,]
+week38<-qw[260:266,]
+week39<-qw[267:273,]
+week40<-qw[274:280,]
+week41<-qw[281:287,]
+week42<-qw[288:294,]
+week43<-qw[295:301,]
+week44<-qw[302:308,]
+week45<-qw[309:315,]
+week46<-qw[316:322,]
+week47<-qw[323:329,]
+week48<-qw[330:336,]
+week49<-qw[337:343,]
+week50<-qw[344:350,]
+week51<-qw[351:357,]
+week52<-qw[358:364,]
+week53<-qw[365:371,]
+week54<-qw[372:378,]
+week55<-qw[379:385,]
+week56<-qw[386:392,]
+week57<-qw[393:399,]
+week58<-qw[400:406,]
+week59<-qw[407:413,]
+week60<-qw[414:420,]
+week61<-qw[421:427,]
+week62<-qw[428:434,]
+week63<-qw[435:441,]
+week64<-qw[442:448,]
+week65<-qw[449:455,]
+week66<-qw[456:462,]
+week67<-qw[463:469,]
+week68<-qw[470:476,]
+week69<-qw[477:483,]
+week70<-qw[484:490,]
+week71<-qw[491:497,]
+week72<-qw[498:504,]
+week73<-qw[505:511,]
+week74<-qw[512:518,]
+week75<-qw[519:525,]
+week76<-qw[526:532,]
+week77<-qw[533:539,]
+week78<-qw[540:546,]
+week79<-qw[547:553,]
+week80<-qw[554:560,]
+week81<-qw[561:567,]
+week82<-qw[568:574,]
+week83<-qw[575:581,]
+week84<-qw[582:588,]
+week85<-qw[589:595,]
+week86<-qw[596:602,]
+week87<-qw[603:609,]
+week88<-qw[610:616,]
+week89<-qw[617:623,]
+week90<-qw[624:630,]
+week91<-qw[631:637,]
+week92<-qw[638:644,]
+week93<-qw[645:651,]
+week94<-qw[652:658,]
+week95<-qw[659:665,]
+week96<-qw[666:672,]
+week97<-qw[673:679,]
+week98<-qw[680:686,]
+week99<-qw[687:693,]
+week100<-qw[694:700,]
+week101<-qw[701:707,]
+week102<-qw[708:714,]
+week103<-qw[715:721,]
+week104<-qw[722:728,]
+week105<-qw[729:735,]
+week106<-qw[736:742,]
+week107<-qw[743:749,]
+week108<-qw[750:756,]
+week109<-qw[757:763,]
+week110<-qw[764:770,]
+week111<-qw[771:777,]
+week112<-qw[778:784,]
+week113<-qw[785:791,]
+week114<-qw[792:798,]
+week115<-qw[799:805,]
+week116<-qw[806:812,]
+week117<-qw[813:819,]
+week118<-qw[820:826,]
+week119<-qw[827:833,]
+week120<-qw[834:840,]
+week121<-qw[841:847,]
+week122<-qw[848:854,]
+week123<-qw[855:861,]
+week124<-qw[862:868,]
+week125<-qw[869:875,]
+week126<-qw[876:882,]
+week127<-qw[883:889,]
+week128<-qw[890:896,]
+week129<-qw[897:903,]
+week130<-qw[904:910,]
+week131<-qw[911:917,]
+week132<-qw[918:924,]
+week133<-qw[925:931,]
+week134<-qw[932:938,]
+week135<-qw[939:945,]
+week136<-qw[946:952,]
+week137<-qw[953:959,]
+week138<-qw[960:966,]
+week139<-qw[967:973,]
+week140<-qw[974:980,]
+week141<-qw[981:987,]
+week142<-qw[981:987,]
+week143<-qw[995:1001,]
+week144<-qw[1002:1008,]
+week145<-qw[1009:1015,]
+week146<-qw[1016:1022,]
+week147<-qw[1023:1029,]
+week148<-qw[1030:1036,]
+week149<-qw[1037:1043,]
+week150<-qw[1044:1050,]
+week151<-qw[1051:1057,]
+week152<-qw[1058:1064,]
+week153<-qw[1065:1071,]
+week154<-qw[1072:1078,]
+week155<-qw[1079:1085,]
+week156<-qw[1086:1092,]
+week157<-qw[1093:1099,]
+week158<-qw[1100:1106,]
+week159<-qw[1107:1113,]
+week160<-qw[1114:1120,]
+week161<-qw[1121:1127,]
+week162<-qw[1128:1134,]
+week163<-qw[1135:1141,]
+week164<-qw[1142:1148,]
+week165<-qw[1149:1155,]
+week166<-qw[1156:1162,]
+week167<-qw[1163:1169,]
+week168<-qw[1170:1176,]
+week169<-qw[1177:1183,]
+week170<-qw[1184:1190,]
+week171<-qw[1191:1197,]
+week172<-qw[1198:1204,]
+week173<-qw[1205:1211,]
+week174<-qw[1212:1218,]
+week175<-qw[1219:1225,]
+week176<-qw[1226:1232,]
+week177<-qw[1233:1239,]
+week178<-qw[1240:1246,]
+week179<-qw[1247:1253,]
+week180<-qw[1254:1260,]
+week181<-qw[1261:1267,]
+week182<-qw[1268:1274,]
+week183<-qw[1275:1281,]
+week184<-qw[1282:1288,]
+# Last 12 Days Condition 
+last12<-df_gogle_sheet[184:195,]
+last12$Date<-as.Date(last12$Date,"%d/%m/%Y")
+
+
+Worldd = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1169351736"
+Worldd = gsheet2tbl(Worldd)
+
+Worldd$Date<-as.Date(Worldd$Date,"%m/%d/%y")
+
+Monthly_covid = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=819064613"
+Monthly = gsheet2tbl(Monthly_covid)
+Monthly$Month_Name<-factor(Monthly$Month_Name)
+
+Monthly_a = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=804322452"
+Monthly_a = gsheet2tbl(Monthly_a)
+
+Monthly_a$Date_range<-factor(Monthly_a$Date_range)
+
+Monthly_Total = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=971807008"
+Monthly_Total = gsheet2tbl(Monthly_Total)
+
+Monthly_Total$Date_range<-factor(Monthly_Total$Date_range)
+
+vlok= "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1053418174"
+vlok = gsheet2tbl(vlok)
+
+vlok$Date_range<-factor(vlok$Date_range)
+
+levels(vlok$Date_range)[levels(vlok$Date_range)=="March 8 - 31"] <-"March20"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="April 1 - 30"] <-"April20"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="May 1-31"] <-"May20"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="June 1-30"] <-"June20"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="July 1-31"] <-"July20"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Aug 1-31"] <-"Aug20"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Sep 1-30"] <-"Sep20"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Oct 1-31"] <-"Oct20"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Nov 1-30"] <-"Nov20"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Dec 1-31"] <-"Dec20"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Jan21 1-31"] <-"Jan21"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Feb21 1-28"] <-"Feb21"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="March21 1-31"] <-"March21"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="May21 1-31"] <-"May21"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="June21 1-30"] <-"June21"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="July21 1-31"] <-"July21"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Sep21 1-30"] <-"Sep21"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Oct21 1-31"] <-"Oct21"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Nov21 1-30"] <-"Nov21"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Dec21 1-30"] <-"Dec21"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Jan22 1-31"] <-"Jan22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Feb22 1-28"] <-"Feb22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="March22 1-31"] <-"March22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="March22 1-31"] <-"March22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="April22 1-30"] <-"April22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="May22 1-31"] <-"May22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="June22 1-30"] <-"June22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Aug22 1-31"] <-"Aug22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Sep22 1-30"] <-"Sep22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Oct22 1-31"] <-"Oct22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Nov22 1-30"] <-"Nov22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Dec22 1-31"] <-"Dec22"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Jan23 1-31"] <-"Jan23"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Feb23 1-28"] <-"Feb23"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Mar23 1-31"] <-"Mar23"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="April23 1-30"] <-"April23"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="May23 1-31"] <-"May23"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="June23 1-30"] <-"June23"
+levels(vlok$Date_range)[levels(vlok$Date_range)=="Aug23 1-31"] <-"Aug23"
+
+District_death="https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1231824951"
+District_death = gsheet2tbl(District_death)
+
+
+District_death$Date<-as.Date(District_death$Date,"%m/%d/%Y")
+
+`%>%` <- magrittr::`%>%`
+#------------------ Parameters ------------------
+# Set colors
+# https://www.w3.org/TR/css-color-3/#svg-color
+
+active_color <- "#1f77b4"
+recovered_color <- "forestgreen"
+death_color <- "red"
+
+Sits= "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1404133649"
+Sits = gsheet2tbl(Sits)
+
+Condition<-Sits%>%
+  summarise(Parcentage = round(No/sum(No)*100,digits = 2))
+
+Sits<-Sits%>%
+  mutate(Condition)
+
+Sits$Variables<-factor(Sits$Variables)
+
+daic= "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=308802324"
+daic = gsheet2tbl(daic)
+
+daic$Date<-as.Date(daic$Date,"%m/%d/%Y")
+
+daid= "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=467507730"
+daid = gsheet2tbl(daid)
+daid$Date<-as.Date(daid$Date,"%m/%d/%Y")
+
+
+Vac_Compa1= "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=823411936"
+Vac_Compa1 = gsheet2tbl(Vac_Compa1)
+
+Vac_Compa1$Category<-as.Date(Vac_Compa1$Category,"%m/%d/%Y")
+
+Vac_Compa1 <- Vac_Compa1 %>% mutate(Total= AstraZeneca+Pfizer+Sinopharm+Moderna+Sinovac+`Janssen(Johnson)`)
+
+
+Vac_Compa2= "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=210312444"
+Vac_Compa2 = gsheet2tbl(Vac_Compa2)
+
+Vac_Compa2$Category<-as.Date(Vac_Compa2$Category,"%m/%d/%Y")
+
+Vac_Compa2 <- Vac_Compa2 %>% mutate(Total= AstraZeneca+Pfizer+Sinopharm+Moderna+Sinovac+`Janssen(Johnson)`)
+
+
+Vac_Compa3= "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=997009525"
+Vac_Compa3 = gsheet2tbl(Vac_Compa3)
+
+Vac_Compa3$Category<-as.Date(Vac_Compa3$Category,"%m/%d/%Y")
+
+Vac_Compa3 <- Vac_Compa3 %>% mutate(Total= AstraZeneca+Pfizer+Sinopharm+Moderna+Sinovac+`Janssen(Johnson)`)
+
+Vaccine_comapny= "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=561693051"
+Vaccine_comapny = gsheet2tbl(Vaccine_comapny)
+
+Vaccine_comapny<-Vaccine_comapny%>%
+  rename(Vaccine_name = `*Vaccine Name*`,
+         First_dose = `*1st dose*`,
+         Second_dose = `*2nd dose*`,
+         Booster_dose = `*3rd dose*`)
+
+Vaccine_comapny<-Vaccine_comapny%>%
+  select('Vaccine_name','First_dose','Second_dose','Booster_dose')
+
+Vaccine_comapny<-Vaccine_comapny[1:5,]
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Active Patients {.value-box}
+
+```{r}
+valueBox(value = paste(format(Sits$No[1] , big.mark = ","), " (",
+                       round((Sits$No[1] / sum(Sits$No))*100, 2), 
+                       "%)", sep = ""), 
+         caption = "Active Patients", 
+         icon = "fas fa-user-md", 
+         color = active_color)
+```
+
+### recovered {.value-box}
+
+```{r}
+valueBox(value = paste(format(Sits$No[2] , big.mark = ","), " (",
+                       round((Sits$No[2] / sum(Sits$No))*100, 2), 
+                       "%)", sep = ""), 
+         caption = "Recovered Cases", icon = "fas fa-heartbeat", 
+         color = recovered_color)
+```
+
+### death {.value-box}
+
+```{r}
+valueBox(value = paste(format(Sits$No[3] , big.mark = ","), " (",
+                       round((Sits$No[3] /sum(Sits$No))*100, 2), 
+                       "%)", sep = ""),
+         caption = "Death Cases", 
+         icon = "fas fa-heart-broken", 
+         color = death_color)
+```
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Daily Covid 19 Situation in BD
+
+```{r}
+# Daily New Cases, Death and Recovered by Dailt New Test
+arrange_new<-df_gogle_sheet%>%
+  select('Date',`New Tests`,`Daily new cases`,`Daily new deaths`,`New Recoverd`)%>%
+  gather(key = "variable", value = "value", -Date)
+
+b20<-ggplot(arrange_new, aes(x = Date, y = value))+ 
+  geom_line(aes(color = variable))+geom_point(aes(color = variable)) + 
+  scale_color_manual(values = c("#3333FF", "#330000","#990000","#808080"))+
+  theme_economist_white()+theme(axis.text.y = element_blank(),axis.title.y = element_blank())+ggtitle("Daily New Cases, Death & Daily Recovered By Daily New Test")
+ggplotly(b20)
+```
+
+### 1st dose Vaccination
+```{r}
+Vac_Compa1<-Vac_Compa1[305:321,]
+
+
+Vac1a<-Vac_Compa1%>%
+  group_by(Category) %>%
+  gather(Variable, values,AstraZeneca,Pfizer,Sinopharm,Moderna,Sinovac,`Janssen(Johnson)`, factor_key = TRUE)
+Vac1a<-Vac1a%>%
+  select('Category','Variable','values')
+# Arrange plot
+Vac1ag<-ggplot(Vac1a, aes(x = Category, y = values,fill = Variable)) + 
+  geom_line(aes(color = Variable))+geom_point(aes(color = Variable))+
+  theme_minimal(base_size = 20)+theme(legend.position = "top")+ggtitle("All vaccine 1st dose(Aug 2023) administered over time",subtitle = "Source: http://DGHS.gov.bd")+theme(legend.position = "none")+facet_wrap(~Variable)
+ggplotly(Vac1ag)
+```
+
+### 2nd dose Vaccination
+```{r}
+Vac_Compa2<-Vac_Compa2[305:321,]
+
+Vac2a<-Vac_Compa2%>%
+  group_by(Category) %>%
+  gather(Variable, values,AstraZeneca,Pfizer,Sinopharm,Moderna,Sinovac,`Janssen(Johnson)`, factor_key = TRUE)
+Vac2a<-Vac2a%>%
+  select('Category','Variable','values')
+# Arrange plot
+Vac2ag<-ggplot(Vac2a, aes(x = Category, y = values,fill = Variable)) + 
+  geom_line(aes(color = Variable))+geom_point(aes(color = Variable))+
+  theme_minimal(base_size = 20)+theme(legend.position = "top")+ggtitle("All vaccine 2nd dose(Aug 2023) administered over time",subtitle = "Source: http://DGHS.gov.bd")+theme(legend.position = "none")+facet_wrap(~Variable)
+
+ggplotly(Vac2ag)
+```
+
+### 3rd dose Vaccination
+```{r}
+Vac_Compa3<-Vac_Compa3[305:321,]
+
+Vac3a<-Vac_Compa3%>%
+  group_by(Category) %>%
+  gather(Variable, values,AstraZeneca,Pfizer,Sinopharm,Moderna,Sinovac,`Janssen(Johnson)`, factor_key = TRUE)
+Vac3a<-Vac3a%>%
+  select('Category','Variable','values')
+# Arrange plot
+Vac3ag<-ggplot(Vac3a, aes(x = Category, y = values,fill = Variable)) + 
+  geom_line(aes(color = Variable))+geom_point(aes(color = Variable))+
+  theme_minimal(base_size = 20)+theme(legend.position = "top")+ggtitle("All vaccine 3rd dose(Aug 2023) administered over time",subtitle = "Source: http://DGHS.gov.bd")+theme(legend.position = "none")+facet_wrap(~Variable)
+ggplotly(Vac3ag)
+```
+
+
+### Scatter Diagrams
+```{r}
+frn2gf<-df_gogle_sheet%>%
+   group_by() %>%
+   gather(metric, Value,`Daily new cases`,`Daily new deaths`,`New Recoverd`, factor_key = TRUE)
+
+
+frn2gf<-frn2gf%>%
+   select(`New Tests`,'metric','Value')
+
+qer<-ggplot(frn2gf, aes(x=`New Tests`, y=Value, color=metric,shape=metric)) +
+  geom_point() + 
+  geom_smooth(method="lm", se=FALSE,aes(fill=metric), fullrange=TRUE)+scale_color_canva()+theme_fivethirtyeight()+ggtitle("Association between Daily New test, Confirmed and Death situation")+facet_wrap(~metric)
+ggplotly(qer)
+```
+
+
+### Daily Affected Rates
+
+```{r}
+arrange3<-df_gogle_sheet%>%
+  select('Date','Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  gather(key = "variable", value = "value", -Date)
+
+fgts<-ggplot(arrange3, aes(x = Date, y = value)) + 
+  geom_line(aes(color = variable)) + 
+  scale_fill_tableau()+geom_point(aes(color = variable))+
+  theme_minimal(base_size = 20)+ggtitle("Affected Rate, Death rate and Recovery Rate")
+fgts<-fgts+theme(axis.text.y = element_blank(),axis.title.y = element_blank())
+ggplotly(fgts)
+```
+
+### Monthly Analysis
+
+```{r}
+# Monthly ToTal Cases, Total Death and Total Recovered
+Montha345<-Monthly_Total%>%
+    select('Date_range','Total_affected','Total_death','Total_recovered')%>%
+    gather(key = "variable", value = "value", -Date_range)
+
+# Arrange plot
+ sdf2<-ggplot(data = Montha345,aes(reorder(Date_range,value),value,label = value,fill = variable))+geom_bar(position = "stack",stat = "identity")+
+    ggtitle("Monthly Total Affected, Death and Recovery Situation in Covid 19")+theme_minimal(base_size = 20)+
+    xlab("Month Name")+ylab("Variable")+
+    theme(legend.position = "none",axis.text = element_blank())+theme(axis.title = element_text(size = 20))+
+    labs(caption = "Data Source:https://IEDCR.gov.bd")
+ sdf2<-sdf2+coord_flip()+scale_fill_tableau()+facet_wrap(~variable,ncol = 4)+theme(legend.position = "none")
+ggplotly(sdf2)
+```
+
+
+### Monthly Average
+
+```{r}
+# Month Analysis
+Month1<-df_gogle_sheet[1:32,]
+Month2<-df_gogle_sheet[33:62,]
+Month3<-df_gogle_sheet[63:93,]
+Month4<-df_gogle_sheet[94:123,]
+Month5<-df_gogle_sheet[124:154,]
+Month6<-df_gogle_sheet[155:185,]
+Month7<-df_gogle_sheet[186:215,]
+Month8<-df_gogle_sheet[216:246,]
+Month9<-df_gogle_sheet[247:276,]
+Month10<-df_gogle_sheet[277:307,]
+Month11<-df_gogle_sheet[308:338,]
+Month12<-df_gogle_sheet[339:366,]
+Month13<-df_gogle_sheet[367:397,]
+Month14<-df_gogle_sheet[398:427,]
+Month15<-df_gogle_sheet[428:458,]
+Month16<-df_gogle_sheet[459:488,]
+Month17<-df_gogle_sheet[489:519,]
+Month18<-df_gogle_sheet[520:550,]
+Month19<-df_gogle_sheet[551:580,]
+Month20<-df_gogle_sheet[581:611,]
+Month21<-df_gogle_sheet[612:641,]
+Month22<-df_gogle_sheet[642:672,]
+Month23<-df_gogle_sheet[673:703,]
+Month24<-df_gogle_sheet[704:731,]
+Month25<-df_gogle_sheet[732:762,]
+Month26<-df_gogle_sheet[763:792,]
+Month27<-df_gogle_sheet[793:823,]
+Month28<-df_gogle_sheet[824:853,]
+Month29<-df_gogle_sheet[854:884,]
+Month30<-df_gogle_sheet[885:915,]
+Month31<-df_gogle_sheet[916:945,]
+Month32<-df_gogle_sheet[946:976,]
+Month33<-df_gogle_sheet[977:1006,]
+Month34<-df_gogle_sheet[1007:1037,]
+Month35<-df_gogle_sheet[1038:1068,]
+Month36<-df_gogle_sheet[1069:1096,]
+Month37<-df_gogle_sheet[1097:1127,]
+Month38<-df_gogle_sheet[1028:1157,]
+Month39<-df_gogle_sheet[1158:1188,]
+Month40<-df_gogle_sheet[1189:1218,]
+Month41<-df_gogle_sheet[1219:1249,]
+Month42<-df_gogle_sheet[1250:1280,]
+options(digits=2)
+
+vem<-Month1%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+  options(digits=2)
+
+vm<-Month2%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+csm<-Month3%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+cs1m<-Month4%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+cs2m<-Month5%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs3m<-Month6%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+cs4m<-Month7%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+cs5m<-Month8%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5n<-Month9%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5d<-Month10%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5ds<-Month11%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dsdf<-Month12%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dsdfe<-Month13%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dsdffe<-Month14%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssder<-Month15%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssder2<-Month16%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe2<-Month17%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3<-Month18%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+
+cs5dssderwe33<-Month19%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe333<-Month20%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3333<-Month21%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3334<-Month22%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3335<-Month23%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3336<-Month24%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3337<-Month25%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3338<-Month26%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3339<-Month27%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe333456<-Month28%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe333457<-Month29%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe333458<-Month30%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe333459<-Month31%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3334510<-Month32%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe33589<-Month33%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3334547810<-Month34%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+
+cs5dssderwe3334547811<-Month35%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3334547812<-Month36%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3334547813<-Month37%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3334547814<-Month38%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3334547815<-Month39%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+
+cs5dssderwe3334547816<-Month40%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3334547818<-Month41%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+cs5dssderwe3334547819<-Month42%>%
+  select(`Daily new cases`,`Daily new deaths`,`New Recoverd`,`New Tests`,'Daily_AffectedRate',`Death rate`,`Recovery Rate`)%>%
+  summarise_all(funs(mean))
+
+
+xm<-rbind(vem,vm,csm,cs1m,cs2m,cs3m,cs4m,cs5m,cs5n,cs5d,cs5ds,cs5dsdf,cs5dsdfe,cs5dsdffe,cs5dssder,cs5dssder2,cs5dssderwe2,cs5dssderwe3,cs5dssderwe33,cs5dssderwe333,cs5dssderwe3333,cs5dssderwe3334,cs5dssderwe3335,cs5dssderwe3336,cs5dssderwe3337,cs5dssderwe3338,cs5dssderwe3339,cs5dssderwe333456,cs5dssderwe333457,cs5dssderwe333458,cs5dssderwe333459,cs5dssderwe3334510,cs5dssderwe33589,cs5dssderwe3334547810,cs5dssderwe3334547811,cs5dssderwe3334547812,cs5dssderwe3334547813,cs5dssderwe3334547814,cs5dssderwe3334547815,cs5dssderwe3334547816,cs5dssderwe3334547818,cs5dssderwe3334547819)
+Month_Names<-c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42)
+xm<-cbind(Month_Names,xm)
+
+#Monthly Analysis
+xm<-xm%>%
+  group_by(Month_Names) %>%
+  gather(Variables, n,'Daily_AffectedRate',`Death rate`,`Recovery Rate`, factor_key = TRUE)
+xm<-xm%>%
+  select('Month_Names','Variables','n')
+
+xm$Month_Names<-factor(xm$Month_Names,levels=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42),labels=c("1st Month","2nd Month","3rd Month","4th Month","5th Month","6th Month","7th Month","8th Month","9th Month","10th Month","11th Month","12th Month","13th Month","14th Month","15th Month","16th Month","17th Month","18th Month","19th Month","20th Month","21th Month","22th Month","23th Month","24th Month","25th Month","26th Month","27th Month","28th Month","29th Month","30th Month","31th Month","32th Month","33th Month","34th Month","35th Month","36th Month","37th Month","38th Month","39th Month","40th Month","41th Month","42th week"),order='T')
+
+# Monthly Cases Rates
+Monthly1<-ggplot(data = xm,aes(Month_Names,n,label = round(n,digits = 2),fill = Variables))+geom_bar(position = "stack",stat = "identity")+
+  ggtitle("Monthly Average rates due to the Covid 19 in BD")+theme_minimal(base_size = 20)+theme(legend.position = "top")+
+  xlab("Month Range")+ylab("Variable")+
+  theme(axis.text = element_blank(),legend.position = "none")+
+  labs(caption = "Data Source:https://IEDCR.gov.bd")
+Monthly1<-Monthly1+scale_fill_tableau()
+ggplotly(Monthly1)
+```
+
+### Last 3 Months
+
+```{r}
+a<-c("June23")
+June23<-df_gogle_sheet%>%
+  filter(Date >= "2023-6-1", Date <= "2023-6-30")%>%
+  select('Date',`Daily new cases`,`New Recoverd`)%>%
+  mutate(Month_Name = a)
+b<-c("July23")
+
+July23<-df_gogle_sheet%>%
+  filter(Date >= "2023-7-1", Date <= "2023-7-31")%>%
+  select('Date',`Daily new cases`,`New Recoverd`)%>%
+  mutate(Month_Name = b)
+
+c<-c("Aug23")
+
+Aug23<-df_gogle_sheet%>%
+  filter(Date >= "2023-8-1", Date <= "2023-8-31")%>%
+  select('Date',`Daily new cases`,`New Recoverd`)%>%
+  mutate(Month_Name = c)
+Result <- merge(June23,July23, all=TRUE) 
+
+Result1<-merge(Result,Aug23, all=TRUE)
+
+June23df<-df_gogle_sheet%>%
+  filter(Date >= "2023-6-1", Date <= "2023-6-30")%>%
+  select('Date',`Daily new deaths`)%>%
+  mutate(Month_Name = a)
+
+b<-c("July23")
+July23df<-df_gogle_sheet%>%
+  filter(Date >= "2023-7-1", Date <= "2023-7-31")%>%
+  select('Date',`Daily new deaths`)%>%
+  mutate(Month_Name = b)
+
+c<-c("Aug23")
+
+Aug23df<-df_gogle_sheet%>%
+  filter(Date >= "2023-8-1", Date <= "2023-8-31")%>%
+  select('Date',`Daily new deaths`)%>%
+  mutate(Month_Name = c)
+
+
+
+re<-merge(June23df,July23df, all=TRUE)
+re1<-merge(re,Aug23df, all=TRUE)
+
+Mnds<-Result1%>%
+  select('Date',`Daily new cases`,`New Recoverd`)%>%
+  gather(key = "variable", value = "value", -Date)
+
+Mnds1<-re1%>%
+  select('Date',`Daily new deaths`)%>%
+  gather(key = "variable", value = "value", -Date)
+
+Mndsg<-ggplot(Mnds, aes(x = Date, y = value,label = value,fill = variable)) + 
+  geom_line(aes(color = variable))+geom_point(aes(color = variable))+
+  scale_color_manual(values = c("#3333FF", "#330000"))+
+  theme_minimal(base_size = 20)+theme(legend.position = "top")+ggtitle("Last Three Month Covid 19 Daily Affected & Recovered Situation",subtitle = "Source: http://IEDCR.gov.bd")
+ggplotly(Mndsg)
+```
+
+### Last 3 Months Deaths
+```{r}
+Mnds1g<-ggplot(Mnds1, aes(x = Date, y = value,label = value,fill = variable)) + 
+  geom_line(aes(color = variable))+geom_point(aes(color = variable))+
+  scale_color_manual(values = c("red"))+
+  theme_minimal(base_size = 20)+theme(legend.position = "top")+ggtitle("Last Three Month Covid 19 Daily Death Situation",subtitle = "Source: http://IEDCR.gov.bd")
+ggplotly(Mnds1g)
+```
+
+
+### Monthly Condition
+```{r}
+vlo<-vlok%>%
+   group_by(Date_range)%>%
+   select("Total_affected","Total_death","Total_recovered")%>%
+   gather(variable, value,'Total_affected','Total_death','Total_recovered', factor_key = TRUE)
+
+vlo<-vlo%>%
+  select("variable","value")
+
+vlog<-ggplot(data = vlo,aes(reorder(Date_range,-value),value,fill = variable))+geom_bar(position = "dodge",stat = "identity")+
+   ggtitle("Monthly Total Confirmed, Total Death & Total Recovered about covid 19",subtitle = "Data Source : http://IEDCR.gov.bd")+theme_minimal(base_size = 20)+
+   xlab("Date_range")+ylab("Variable")+
+   theme(legend.position = "top")+theme(axis.title = element_text(size = 20))+theme(text = element_text(size = 30),axis.text.y = element_blank())+theme(plot.title = element_text(hjust = 0.5,size = 25,face = "bold"))+
+ labs(caption = "Created by, Md. Mahdi Hasan")+theme(axis.text = element_text(size = 25),axis.text.x = element_blank())+scale_fill_tableau()
+vlog<-vlog+coord_flip()+facet_wrap(~variable,ncol = 3)+theme(legend.position = "none")
+ggplotly(vlog)
+```
+
+
+### Weekly Analysis
+
+```{r}
+ tw = "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=2067929569"
+ tw = gsheet2tbl(tw)
+ 
+ tw<-tw[-2]
+ tw$week_Name<-factor(tw$week_Name)
+
+levels(tw$week_Name)<-c("1st Week","2nd Week","3rd Week","4th Week","5th Week","6th Week","7th Week","8th Week","9th Week","10th Week","11th Week","12th Week","13th Week","14th Week","15th Week","16th Week","17th week","18th week","19th week","20th week","21th week","22th week","23th week","24th week","25th week","26th Week","27th week","28th week","29th week","30th week","31th Week","32th week","33th week","34th week","35th week","36th week","37th week","38th week","39th week","40th week","41th week","42th week","43th week","44th week","45th week","46th week","47th week","48th week","49th week","50th week","51th week","52th week","53th week","54th week","55th week","56th week","57th week","58th week","59th week","60th week","61th week","62th week","63th week",
+                        "64th week","65th week","66th week","67th week","68th week","69th week","70th week","71th week","72th week","73th week","74th week","75th week","76th week","77th week","78th week","79th week","80th week","81th week","82th week","83th week","84th week","85th week","86th week","87th week","88th week","89th week","90th week","91th week","92th week","93th week","94th week","95th week","96th week","97th week","98th week","99th week","100th week","101th week","102th week","103th week","104th week","105th week","106th week","107th week","108th week","109th week","110th week","111th week","112th week","113th week","114th week","115th week","116th week","117th week","118th week","119th week","120th week","121th week","122th week","123th week","124th week","125th week","126th week","127th week","128th week","129th week","130th week","131th week","132th week","133th week","134th week","135th week","136th week","137th week","138th week","139th week","140th week","141th week","142th week","143th week","144th week","145th week","146th week","147th week","148th week","149th week","150th week",
+                        "151th week","152th week","153th week","154th week","155th week","156th week","157th week","158th week","159th week","160th week","161th week","162th week","163th week","164th week","165th week","166th week","167th week","168th week","169th week","170th week","171th week","172th week","173th week","174th week","175th week","176th week","177th week","178th week","179th week","180th week","181th week","182th week","183th week","184th week")
+
+ 
+ # Weekly average, Death and recovered
+ erx<-tw%>%
+   select('week_Name','Total_Confirmed','Total_Death',`Total Recovered`)%>%
+   gather(key = "variable", value = "value", -week_Name)
+ 
+ sde<-ggplot(data = erx,aes(week_Name,value,label = value,fill = variable))+geom_bar(position = "stack",stat = "identity")+
+   ggtitle("Weekly Total Confirmed, Total Death & Total Recovered",subtitle = "Data Source : http://IEDCR.gov.bd")+
+   xlab("Week Range")+ylab("Variable")+theme_minimal(base_size = 15)+
+   theme(legend.position = "top")+
+ labs(caption = "Data Source:https://IEDCR.gov.bd")+scale_fill_excel_new()
+ sde<-sde+coord_flip()+facet_wrap(~variable,ncol = 3)+theme(legend.position = "none",axis.text = element_blank())
+ ggplotly(sde)
+```
+
+
+### Weekly Average
+
+```{r}
+arra<-weekly%>%
+    select('week_Name','Avg_Test','Avg_Affected','Avg_Death','Avg_Recovered')%>%
+    gather(key = "variable", value = "value", -week_Name)
+ 
+ # Arrange plot
+ sdf<-ggplot(data = arra,aes(week_Name,value,label = value,fill = variable))+geom_bar(position = "stack",stat = "identity")+
+    ggtitle("Weekly Avarage affected,Average Death and Average Recovered",subtitle = "Data Source : http://IEDCR.gov.bd")+
+    xlab("Week Range")+ylab("Variable")+
+    theme(legend.position = "top")+
+    labs(caption = "Data Source:https://IEDCR.gov.bd")
+ sdf<-sdf+theme_minimal(base_size = 20)+theme(legend.position = "none")+theme(axis.text = element_blank())+scale_fill_calc()
+ggplotly(sdf)
+```
+
+### Chart of Confirmed Cases
+```{r}
+library(highcharter)
+
+hc2 <- Sits %>%
+  hchart(
+    "pie", hcaes(x = Variables, y = No),
+    name = "Chart of Confirmed Cases of Covid 19"
+    )
+hc2
+```
+
+### Vaccine
+
+```{r}
+options(scipen = 999)
+ 
+
+ Vaccine <- paste("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/vaccinations/vaccinations.csv", sep = "")
+Vaccine <- read_csv(Vaccine)
+
+
+Vaccinee<-Vaccine%>%
+  select('date','location','daily_vaccinations','total_vaccinations','total_vaccinations_per_hundred')%>%
+  filter(location == "India" |  location== "Bangladesh" | location== "Pakistan" | location== "Nepal" | 
+           location== "Sri Lanka" | location== "Afghanistan" | location== "Maldives" | location== "Bhutan")
+
+Vaccine1<-Vaccinee%>%
+  group_by(date)%>%
+  select("location","daily_vaccinations")
+
+Vaccine1$date<-as.Date(Vaccine1$date,"%m/%d/%y")
+
+Vaccine2<-Vaccinee%>%
+  group_by(date)%>%
+  select("location","total_vaccinations_per_hundred")
+
+Vaccine2$date<-as.Date(Vaccine2$date,"%m/%d/%y")
+
+Vaccine2<-na.omit(Vaccine2)
+
+options(scipen = 999)
+
+
+Vaer<-ggplot(Vaccine1,aes(date,daily_vaccinations,fill=location,color=location))+
+  geom_line()+geom_point()+geom_smooth()+
+  ggtitle("South Asian Countries Daily Vaccine Updates",subtitle = "Data Source: ourworldindata.org") +
+  xlab("Date") +
+  ylab("")+
+  facet_wrap(~location)+theme_minimal(base_size = 15)+theme(plot.title = element_text(hjust = 0.5,size = 20,face = "bold"),legend.position = "none")
+Vaer<-Vaer+labs(caption = "Created by Md. Mahdi Hasan")
+ggplotly(Vaer)
+```
+
+
+### Vaccine Rates
+
+```{r}
+options(scipen = 999)
+ 
+
+ Vaer2<-ggplot(Vaccine2,aes(date,total_vaccinations_per_hundred,fill=location,color=location))+
+  geom_line()+geom_point()+geom_smooth()+
+  ggtitle("South Asian Countries Daily Vaccine Rates",subtitle = "Data Source: ourworldindata.org") +
+  xlab("Date") +
+  ylab("Cases Number")+
+  facet_wrap(~location)+theme_minimal(base_size = 15)+theme(plot.title = element_text(hjust = 0.5,size = 20,face = "bold"),legend.position = "none")
+Vaer2<-Vaer2+labs(caption = "Created by Md. Mahdi Hasan")
+ggplotly(Vaer2)
+```
+
+
+### Continents Vaccine Rates
+```{r}
+
+Vaccine_Con<-Vaccine%>%
+  select('date','location','daily_vaccinations','total_vaccinations','total_vaccinations_per_hundred')%>%
+  filter(location == "Africa" |  location== "Asia" | location== "Europe" | location== "North America" | 
+           location== "South America" | location== "Australia/Oceania")
+
+Vaccine_Con<-Vaccine_Con%>%
+  select('date','location','total_vaccinations_per_hundred')
+
+
+Vaer3<-ggplot(Vaccine_Con,aes(date,total_vaccinations_per_hundred,fill=location,color=location))+
+  geom_line()+geom_point()+geom_smooth()+
+  ggtitle("Continents daily  covid-19 Vaccine Rates",subtitle = "Data Source: ourworldindata.org") +
+  xlab("Date") +
+  ylab("Rates")+
+  facet_wrap(~location)+theme_minimal(base_size = 15)+theme(plot.title = element_text(hjust = 0.5,size = 20,face = "bold"),legend.position = "none")
+Vaer3<-Vaer3+labs(caption = "Created by Md. Mahdi Hasan")
+ggplotly(Vaer3)
+```
+
+
+### Vaccine Summary
+```{r}
+Vac2a<-Vaccine_comapny%>%
+  group_by(Vaccine_name) %>%
+  gather(Variable, values,First_dose,Second_dose,Booster_dose, factor_key = TRUE)
+Vac2a<-Vac2a%>%
+  select('Vaccine_name','Variable','values')
+
+Vac2ag<-ggplot(Vac2a,aes(reorder(Vaccine_name,-values),values,fill=Variable))+
+  geom_bar(position = "dodge",stat = "identity")+facet_wrap(~Variable)
+Vac2ag<-Vac2ag+coord_flip()+scale_fill_calc()+ggtitle("Vaccine Summary of Covid 19",subtitle = "Data Source: http://103.247.238.92/webportal/pages/covid19-vaccination-update.php")+labs(caption = "Created by: Md. Mahdi Hasan")+
+  theme_minimal(base_size = 20)+theme(legend.position = "none",axis.text.x = element_blank())+
+  xlab("Vaccines name")+ylab("")
+
+ggplotly(Vac2ag)
+
+```
+
+
+
+### Map
+```{r}
+tsc<-covid19.data(case = 'ts-confirmed')
+tsa<-covid19.data(case = 'ts-All')
+
+live.map(tsc)
+```
+
+
+
+### Weekly Data of BD
+```{r}
+df_rates1 <- weekly %>%
+  dplyr::select("week_Name","week_range","Avg_Test","Avg_Affected","Avg_Death","Avg_Recovered")  
+DT::datatable(df_rates1, options = list(
+  pageLength = 25))
+```
+
+
+### District Vaccine
+```{r}
+topdw= "https://docs.google.com/spreadsheets/d/1oN1RUGHosHNrIWvwYyO4fyDfAKBuYPyvmCWZPJJmgm8/edit#gid=1316354113"
+topdw = gsheet2tbl(topdw)
+
+DT::datatable(topdw, options = list(
+  pageLength = 25))
+```
+
+
+
+
+### Forecasting of Total Confirmed
+
+```{r fig.height=5, fig.width=10}
+ds<-df_gogle_sheet$Date
+y<-df_gogle_sheet$`Total Cases`
+
+df<-data.frame(ds,y)
+ m<-prophet(df)
+ future<-make_future_dataframe(m,periods = 30)
+ forecast<-predict(m,future)
+
+ dyplot.prophet(m,forecast)
+```
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE,results='hide',echo=TRUE}
+library(palmerpenguins)
+citation('palmerpenguins')
+```
+
+
+### About
+
+**The Coronavirus Dashboard**
+
+This Coronavirus dashboard provides an overview of the 2019 Novel Coronavirus COVID-19 (2019-nCoV) epidemic. This dashboard is built with R using the [Rmakrdown](https://rmarkdown.rstudio.com/) using [flexdashboard](https://rmarkdown.rstudio.com/flexdashboard/) framework and can easily reproduce by others.
+
+The website updated in "`r Sys.time()`"
+
+<h3><center><b>Prepared By, Md. Mahdi Hasan</b></center></h3>
+<h3><center><b>B,Sc.(Hon's)(1st Class), Msc(1st Class) </b></center></h3>
+<h3><center><b>Department of Statistics, Dhaka College,Dhaka</b></center></h3>
+<h3><center><b>Data Analyst and Content Creator</b></center></h3>
+<h3><center><b>Data science era</b></center></h3>
+<h3><center> <a href="https://datascienceera.com/about-us/">Visit datascienceera.com!</a> </center></h3>
+<h3><center><b>Mob: 01674544401, 01521202494</b></center></h3>
